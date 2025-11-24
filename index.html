@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación Sistema de Colas G/G/1</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado -->
+        <header class="header">
+            <div class="header-content">
+                <h1>Simulación de Colas G/G/1</h1>
+                <p>Sistema de atención - Frisby Centro Comercial Campanario</p>
+            </div>
+        </header>
+
+        <!-- Panel de Control -->
+        <div class="control-panel">
+            <div class="control-group">
+                <button id="startBtn" class="btn btn-primary">Iniciar</button>
+                <button id="pauseBtn" class="btn btn-secondary" disabled>Pausar</button>
+                <button id="resetBtn" class="btn btn-secondary">Reiniciar</button>
+            </div>
+
+            <div class="control-group">
+                <label for="speedControl">Velocidad:</label>
+                <input type="range" id="speedControl" min="0.5" max="5" step="0.5" value="1">
+                <span id="speedLabel">1.0x</span>
+                <input type="number" id="speedInput" min="0.5" max="5" step="0.1" value="1" placeholder="0.5-5x" title="Ingresa velocidad personalizada (0.5 a 5)">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="animationToggle" checked>
+                    Mostrar animaciones
+                </label>
+            </div>
+
+            <div class="control-group">
+                <label for="simDuration">Duración (min : seg):</label>
+                <input type="number" id="simMin" min="0" max="999" step="1" value="0" style="width:70px"> 
+                <span>min</span>
+                <input type="number" id="simSec" min="0" max="59" step="1" value="0" style="width:70px"> 
+                <span>seg</span>
+                <label style="margin-left:8px">
+                  <input type="checkbox" id="stopAtTime" checked>
+                  Detener al completar tiempo
+                </label>
+            </div>
+        </div>
+
+        <!-- Contenedor Principal -->
+        <div class="main-content">
+            <!-- Simulación Visual -->
+            <section class="simulation-section">
+                <h2>Visualización del Sistema</h2>
+                
+                <div class="queue-visualization">
+                    <!-- Cola de espera -->
+                    <div class="queue-container">
+                        <h3>Cola de Espera (Lq)</h3>
+                        <div class="queue-box" id="queueBox">
+                            <div class="queue-placeholder">Vacía</div>
+                        </div>
+                    </div>
+
+                    <!-- Servidor/Caja -->
+                    <div class="server-container">
+                        <h3>Caja de Atención</h3>
+                        <div class="server-box" id="serverBox">
+                            <div class="server-status idle">
+                                <div class="status-label">Disponible</div>
+                            </div>
+                        </div>
+                        <div class="server-info">
+                            <p>Cliente atendiendo: <span id="clientServing">--</span></p>
+                            <p>Tiempo restante: <span id="timeRemaining">--</span>s</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información de Clientes -->
+                <div class="client-info">
+                    <p>Clientes llegados: <span id="arrivedCount">0</span></p>
+                    <p>Clientes atendidos: <span id="servedCount">0</span></p>
+                    <p>Tiempo simulado: <span id="simTime">0:00</span></p>
+                    <p>Tiempo real transcurrido: <span id="realTime">0:00</span></p>
+                    <p>Tiempo estimado: <span id="estimatedTime">0:00</span></p>
+                </div>
+            </section>
+
+            <!-- Panel de Métricas -->
+            <section class="metrics-section">
+                <h2>Métricas del Sistema</h2>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Lq (Cola promedio)</div>
+                        <div class="metric-value" id="lq">0.00</div>
+                        <div class="metric-unit">clientes</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Wq (Espera promedio)</div>
+                        <div class="metric-value" id="wq">0.00</div>
+                        <div class="metric-unit">segundos</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Ls (Sistema promedio)</div>
+                        <div class="metric-value" id="ls">0.00</div>
+                        <div class="metric-unit">clientes</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">Ws (Tiempo sistema)</div>
+                        <div class="metric-value" id="ws">0.00</div>
+                        <div class="metric-unit">segundos</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">ρ (Utilización)</div>
+                        <div class="metric-value" id="rho">0.00</div>
+                        <div class="metric-unit">%</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-label">P0 (Ocioso)</div>
+                        <div class="metric-value" id="p0">100.00</div>
+                        <div class="metric-unit">%</div>
+                    </div>
+                </div>
+
+                <!-- Parámetros del Sistema -->
+                <div class="parameters-box">
+                    <h3>Parámetros G/G/1</h3>
+                    <div class="params-grid">
+                        <div>
+                            <strong>Llegadas (Lognormal):</strong>
+                            <p>μ = 98.6s | σ = 127.02s</p>
+                        </div>
+                        <div>
+                            <strong>Servicio (Lognormal):</strong>
+                            <p>μ = 91.64s | σ = 43.76s</p>
+                        </div>
+                        <div>
+                            <strong>Modelo:</strong>
+                            <p>G/G/1 (1 servidor, 1 cola)</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Log de Eventos -->
+        <section class="log-section">
+            <div class="log-header">
+                <h2>Registro de Eventos</h2>
+                <button id="clearLogBtn" class="btn-small">Limpiar log</button>
+            </div>
+            <div class="log-box" id="logBox">
+                <div class="log-entry initial">Simulación lista para iniciar...</div>
+            </div>
+            <div id="finalResults" style="margin-top:12px;padding:12px;background:#fff;border-radius:8px;display:none"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
