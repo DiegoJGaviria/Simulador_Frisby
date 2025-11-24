@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulación Sistema de Colas G/G/1</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Encabezado -->
@@ -22,31 +24,33 @@
                 <button id="startBtn" class="btn btn-primary">Iniciar</button>
                 <button id="pauseBtn" class="btn btn-secondary" disabled>Pausar</button>
                 <button id="resetBtn" class="btn btn-secondary">Reiniciar</button>
+                <button id="addServerBtn" class="btn btn-small" title="Agregar una caja de atención">Agregar
+                    Caja</button>
+                <button id="removeServerBtn" class="btn btn-small" title="Eliminar la última caja">Eliminar
+                    Caja</button>
             </div>
 
             <div class="control-group">
                 <label for="speedControl">Velocidad:</label>
                 <input type="range" id="speedControl" min="0.5" max="5" step="0.5" value="1">
                 <span id="speedLabel">1.0x</span>
-                <input type="number" id="speedInput" min="0.5" max="5" step="0.1" value="1" placeholder="0.5-5x" title="Ingresa velocidad personalizada (0.5 a 5)">
+                <input type="number" id="speedInput" min="0.5" max="5" step="0.1" value="1" placeholder="0.5-5x"
+                    title="Ingresa velocidad personalizada (0.5 a 5)">
             </div>
 
             <div class="control-group">
-                <label>
-                    <input type="checkbox" id="animationToggle" checked>
-                    Mostrar animaciones
-                </label>
+
             </div>
 
             <div class="control-group">
                 <label for="simDuration">Duración (min : seg):</label>
-                <input type="number" id="simMin" min="0" max="999" step="1" value="0" style="width:70px"> 
+                <input type="number" id="simMin" min="0" max="999" step="1" value="0">
                 <span>min</span>
-                <input type="number" id="simSec" min="0" max="59" step="1" value="0" style="width:70px"> 
+                <input type="number" id="simSec" min="0" max="59" step="1" value="0">
                 <span>seg</span>
-                <label style="margin-left:8px">
-                  <input type="checkbox" id="stopAtTime" checked>
-                  Detener al completar tiempo
+                <label class="stop-label">
+                    <input type="checkbox" id="stopAtTime" checked>
+                    Detener al completar tiempo
                 </label>
             </div>
         </div>
@@ -56,15 +60,10 @@
             <!-- Simulación Visual -->
             <section class="simulation-section">
                 <h2>Visualización del Sistema</h2>
-                
+
                 <div class="queue-visualization">
                     <!-- Cola de espera -->
-                    <div class="queue-container">
-                        <h3>Cola de Espera (Lq)</h3>
-                        <div class="queue-box" id="queueBox">
-                            <div class="queue-placeholder">Vacía</div>
-                        </div>
-                    </div>
+                    <!-- Cola de espera eliminada (solo visual) -->
 
                     <!-- Servidor/Caja -->
                     <div class="server-container">
@@ -74,27 +73,30 @@
                                 <div class="status-label">Disponible</div>
                             </div>
                         </div>
-                        <div class="server-info">
-                            <p>Cliente atendiendo: <span id="clientServing">--</span></p>
-                            <p>Tiempo restante: <span id="timeRemaining">--</span>s</p>
+                        <!-- Canvas de animación -->
+                        <canvas id="simCanvas" width="860" height="190"></canvas>
+                        <div class="legend" aria-hidden="true">
+                            <div class="item"><span class="dot wait"></span>En espera</div>
+                            <div class="item"><span class="dot service"></span>En servicio</div>
+                            <div class="item"><span class="dot done"></span>Atendido</div>
                         </div>
-                    </div>
-                </div>
+                        <div class="server-info">
+                            <p>Clientes llegados: <strong><span id="arrivedCount">0</span></strong></p>
+                            <p>Clientes atendidos: <strong><span id="servedCount">0</span></strong></p>
+                            <p>Clientes no atendidos: <strong><span id="unservedCount">0</span></strong></p>
+                            <p>Tiempo simulado: <strong><span id="simTime">0:00 Min</span></strong></p>
+                            <p>En cola: <strong><span id="queueCount">0</span></strong></p>
+                            <p>Tiempo restante (cola): <strong><span id="timeRemaining">0:00 Min</span></strong></p>
+                        </div>
 
-                <!-- Información de Clientes -->
-                <div class="client-info">
-                    <p>Clientes llegados: <span id="arrivedCount">0</span></p>
-                    <p>Clientes atendidos: <span id="servedCount">0</span></p>
-                    <p>Tiempo simulado: <span id="simTime">0:00</span></p>
-                    <p>Tiempo real transcurrido: <span id="realTime">0:00</span></p>
-                    <p>Tiempo estimado: <span id="estimatedTime">0:00</span></p>
+                    </div>
                 </div>
             </section>
 
             <!-- Panel de Métricas -->
             <section class="metrics-section">
                 <h2>Métricas del Sistema</h2>
-                
+
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-label">Lq (Cola promedio)</div>
@@ -163,10 +165,11 @@
             <div class="log-box" id="logBox">
                 <div class="log-entry initial">Simulación lista para iniciar...</div>
             </div>
-            <div id="finalResults" style="margin-top:12px;padding:12px;background:#fff;border-radius:8px;display:none"></div>
+
         </section>
     </div>
 
     <script src="script.js"></script>
 </body>
+
 </html>

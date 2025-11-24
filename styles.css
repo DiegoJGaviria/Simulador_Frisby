@@ -169,54 +169,37 @@ body {
 
 .queue-visualization {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+  grid-template-columns: fr;
+  gap: 10px;
+  margin-bottom: 2px;
 }
 
-.queue-container,
 .server-container {
   background: #f8f9fa;
-  padding: 20px;
+  padding: 10px;
   border-radius: 10px;
   border: 2px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
 }
 
-.queue-container h3,
 .server-container h3 {
   color: #495057;
   margin-bottom: 15px;
   font-size: 1.1em;
 }
 
-.queue-box {
-  background: white;
-  border: 2px dashed #dee2e6;
-  border-radius: 8px;
+.server-info {
+  background: #e7f3ff;
   padding: 15px;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  max-height: 150px;
-}
-
-.queue-placeholder {
-  color: #adb5bd;
-  text-align: center;
-  padding: 40px 10px;
-  font-style: italic;
-}
-
-.client-item {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 0.9em;
-  animation: slideIn 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 15px;
+  font-weight: 500;
 }
 
 @keyframes slideIn {
@@ -224,6 +207,7 @@ body {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -268,6 +252,12 @@ body {
 
 .server-info {
   margin-top: 15px;
+  font-size: 0.95em;
+  color: #495057;
+}
+
+.client-stats {
+  margin-top: 12px;
   font-size: 0.95em;
   color: #495057;
 }
@@ -446,6 +436,38 @@ body {
   color: #17a2b8;
 }
 
+/* Canvas de simulación */
+#simCanvas {
+  width: 100%;
+  height: 240px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(20, 35, 60, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Leyenda de puntos (si se requiere) */
+.legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.legend .item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.legend .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -455,6 +477,106 @@ body {
 ::-webkit-scrollbar-track {
   background: #e9ecef;
   border-radius: 10px;
+}
+
+/* client-item removido: la lista de espera visual fue eliminada */
+
+/* Leyenda responsiva */
+@media (max-width: 768px) {
+  .legend {
+    gap: 10px;
+    font-size: 0.95em
+  }
+
+  #simCanvas {
+    height: 180px
+  }
+}
+
+/* Moved inline styles */
+#simCanvas {
+  margin-top: 12px;
+  display: block;
+}
+
+input#simMin,
+input#simSec {
+  width: 70px;
+}
+
+.stop-label {
+  margin-left: 8px;
+}
+
+.legend .dot.wait {
+  background: #667eea
+}
+
+.legend .dot.service {
+  background: #28a745
+}
+
+.legend .dot.done {
+  background: #6c757d
+}
+
+#finalResults {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  display: none;
+}
+
+/* Mini-sim styles */
+.mini-sim-section {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  padding: 18px;
+  border-radius: 10px;
+  border: 1px solid #eef3fb;
+  margin-top: 18px;
+}
+
+.mini-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mini-sim-area {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+#miniCanvas {
+  width: 100%;
+  max-width: 640px;
+  height: 160px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 18px rgba(20, 30, 60, 0.06);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+}
+
+.mini-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  color: #495057;
+}
+
+@media (max-width: 768px) {
+  #miniCanvas {
+    height: 120px
+  }
+
+  .mini-sim-area {
+    flex-direction: column;
+    align-items: stretch
+  }
 }
 
 ::-webkit-scrollbar-thumb {
