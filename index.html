@@ -34,12 +34,13 @@
                 <label for="speedControl">Velocidad:</label>
                 <input type="range" id="speedControl" min="0.5" max="5" step="0.5" value="1">
                 <span id="speedLabel">1.0x</span>
-                <input type="number" id="speedInput" min="0.5" max="5" step="0.1" value="1" placeholder="0.5-5x"
-                    title="Ingresa velocidad personalizada (0.5 a 5)">
+                <!--<input type="number" id="speedInput" min="0.5" max="5" step="0.1" value="1" placeholder="0.5-5x"
+                    title="Ingresa velocidad personalizada (0.5 a 5)">-->
             </div>
 
             <div class="control-group">
-
+                <label>Cantidad de clientes:</label>
+                <input type="number" id="countClients" min="0" max="999" step="1" value="0">
             </div>
 
             <div class="control-group">
@@ -50,7 +51,7 @@
                 <span>seg</span>
                 <label class="stop-label">
                     <input type="checkbox" id="stopAtTime" checked>
-                    Detener al completar tiempo
+                    Detener al completar tiempo o clientes
                 </label>
             </div>
         </div>

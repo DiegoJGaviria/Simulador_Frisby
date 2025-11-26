@@ -38,6 +38,10 @@ class QueueSimulation {
     this.simulationDurationSeconds = 0
     this.endSimTime = null
 
+    this.realTimeMode = false;
+    this.lastRealTimestamp = 0;
+
+
     // Elementos DOM
     this.elements = {
       startBtn: document.getElementById("startBtn"),
@@ -47,6 +51,7 @@ class QueueSimulation {
       speedLabel: document.getElementById("speedLabel"),
       speedInput: document.getElementById("speedInput"),
       animationToggle: document.getElementById("animationToggle"),
+      countClients: document.getElementById("countClients"),
       simMin: document.getElementById("simMin"),
       simSec: document.getElementById("simSec"),
       stopAtTime: document.getElementById("stopAtTime"),
@@ -126,11 +131,26 @@ class QueueSimulation {
     try {
       if (this.isRunning && !this.isPaused) return // Ya está corriendo
 
+
+      /* ------------------------------------------------------
+       1. Leer límite de cantidad de clientes a simular
+      -------------------------------------------------------*/
+      this.maxClientsToSimulate = 0;
+      if (this.elements.countClients) {
+        this.maxClientsToSimulate = Math.max(
+          0,
+          parseInt(this.elements.countClients.value || '0', 10)
+        );
+      }
+
+      console.log("Máximo de clientes configurado:", this.maxClientsToSimulate);
+
       // Leer duración configurada por el usuario
       let durationSec = 0
       if (this.elements.simMin) durationSec += Math.max(0, parseInt(this.elements.simMin.value || '0', 10)) * 60
       if (this.elements.simSec) durationSec += Math.max(0, parseInt(this.elements.simSec.value || '0', 10))
       this.simulationDurationSeconds = durationSec
+      console.log("Cantidad de clientes a simular:", this.elements.countClients ? this.elements.countClients.value : "N/A")
 
       this.isRunning = true
       this.isPaused = false
@@ -287,11 +307,51 @@ class QueueSimulation {
         this.lastEventTime = this.currentTime
         this.currentTime = nextEventTime
 
+        /* ------------------------------------------------------------
+         🔒 1. SI YA SE ALCANZÓ EL LÍMITE DE CLIENTES → BLOQUEAR LLEGADAS
+        -------------------------------------------------------------*/
+        const stopAtTime = this.elements.stopAtTime?.checked ?? false;
+
+        const limitReached = this.maxClientsToSimulate > 0 &&
+          this.arrivedCount >= this.maxClientsToSimulate;
+
+        if (eventType === "arrival" && limitReached) {
+          // NO procesar la llegada
+          // En lugar de eso, mover próxima llegada al infinito (ya no habrá más)
+          this.nextArrivalTime = Infinity;
+
+          // Pasar al siguiente evento (serán departures)
+          continue;
+        }
+
         // Procesar evento
         if (eventType === "arrival") {
           this.processArrival()
         } else {
           this.processDeparture(nextServiceServerIndex)
+        }
+
+        /* ------------------------------------------------------------------------
+         🔚 2. DETENER LA SIMULACIÓN cuando:
+            - Se alcanzó el límite de clientes
+            - No hay cola
+            - No hay servicios activos
+            - Está marcada la opción "detener al completar tiempo o clientes"
+      -------------------------------------------------------------------------*/
+
+        const noQueue = this.queue.length === 0;
+        const noServersBusy = this.servers.every(s => !s.busy); if (
+          limitReached &&
+          noQueue &&
+          noServersBusy &&
+          stopAtTime
+        ) {
+          this.addLog(
+            "Se alcanzó el número máximo de clientes y ya no hay cola ni servicio. Finalizando simulación.",
+            "info"
+          );
+          this.finishSimulation();
+          return;
         }
 
         // Verificar si alcanzamos el tiempo objetivo de simulación
@@ -315,6 +375,28 @@ class QueueSimulation {
   }
 
   processArrival() {
+
+    /* ------------------------------------------------------------
+     🔒 BLOQUEAR LLEGADAS SI SE ALCANZÓ EL LÍMITE DE CLIENTES
+  -------------------------------------------------------------*/
+    if (
+      this.maxClientsToSimulate > 0 &&
+      this.arrivedCount >= this.maxClientsToSimulate
+    ) {
+      // Cancelar futuras llegadas
+      this.nextArrivalTime = Infinity;
+
+      // Log (solo una vez por llegada bloqueada)
+      if (!this._loggedArrivalLimit) {
+        this.addLog(
+          `Se alcanzó el límite de ${this.maxClientsToSimulate} clientes. No se generarán más llegadas.`,
+          "info"
+        );
+        this._loggedArrivalLimit = true;
+      }
+      return;
+    }
+
     this.arrivedCount++
     const clientId = this.arrivedCount
     const arrivalTime = this.currentTime
@@ -730,34 +812,54 @@ class SimulationVisualizer {
   }
 
   resizeCanvas() {
-    const w = this.canvas.clientWidth
-    const h = parseInt(this.canvas.getAttribute('height'), 10) || 220
-    this.canvas.width = Math.round(w * this.devicePixelRatio)
-    this.canvas.height = Math.round(h * this.devicePixelRatio)
-    this.canvas.style.height = h + 'px'
-    this.ctx = this.canvas.getContext('2d')
-    this.ctx.scale(this.devicePixelRatio, this.devicePixelRatio)
-    // recalcular posiciones de servidores según cantidad
-    const clientW = this.canvas.clientWidth
-    const clientH = h
-    const n = (this.sim && this.sim.servers) ? this.sim.servers.length : 1
-    const vGap = 16
-    const totalH = n * this.serverBoxHeight + Math.max(0, n - 1) * vGap
-    let startY = Math.max(this.serverBoxHeight / 2 + 12, (clientH - totalH) / 2 + this.serverBoxHeight / 2)
-    const x = clientW - this.marginRight - (this.serverBoxWidth / 2)
-    this.serverPositions = []
+    const n = (this.sim && this.sim.servers) ? this.sim.servers.length : 1;
+
+    // === NUEVO CÁLCULO DE ALTURA ===
+    const vGap = 16;
+    const totalH = n * this.serverBoxHeight + Math.max(0, (n - 1) * vGap);
+    const minHeight = 220;               // altura base cuando hay 1 caja
+    const h = Math.max(minHeight, totalH + 40);  // 40px diseño/márgenes
+
+    // === TAMBIÉN ACTUALIZA EL CANVAS EN PANTALLA ===
+    this.canvas.style.height = h + 'px';
+    this.canvas.height = Math.round(h * this.devicePixelRatio);
+
+    // === ANCHO IGUAL QUE SIEMPRE ===
+    const w = this.canvas.clientWidth;
+    this.canvas.width = Math.round(w * this.devicePixelRatio);
+
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.scale(this.devicePixelRatio, this.devicePixelRatio);
+
+    // CONTINÚA TU CÓDIGO EXISTENTE:
+    const clientW = this.canvas.clientWidth;
+    const clientH = h;
+
+    const x = clientW - this.marginRight - (this.serverBoxWidth / 2);
+    this.serverPositions = [];
+
+    let startY = Math.max(
+      this.serverBoxHeight / 2 + 12,
+      (clientH - totalH) / 2 + this.serverBoxHeight / 2
+    );
+
     for (let i = 0; i < n; i++) {
-      this.serverPositions.push({ x: x, y: startY + i * (this.serverBoxHeight + vGap) })
+      this.serverPositions.push({
+        x: x,
+        y: startY + i * (this.serverBoxHeight + vGap)
+      });
     }
-    // colocar inicio de la cola más cerca de las cajas (fila visual más próxima)
-    const desiredX = Math.max(this.marginLeft, x - 220)
-    this.queueStart.x = desiredX
-    this.queueStart.y = clientH / 2 + 6
-    // ajustar slotSpacing dinámico (menos espacio si la cola está próxima)
-    const available = Math.max(60, x - this.queueStart.x - 40)
-    const baseSlots = Math.max(6, this.queueOrder.length || 6)
-    this.slotSpacing = Math.min(48, Math.max(24, Math.floor(available / baseSlots)))
+
+    // Ubicación de cola
+    const desiredX = Math.max(this.marginLeft, x - 220);
+    this.queueStart.x = desiredX;
+    this.queueStart.y = clientH / 2 + 6;
+
+    const available = Math.max(60, x - this.queueStart.x - 40);
+    const baseSlots = Math.max(6, this.queueOrder.length || 6);
+    this.slotSpacing = Math.min(48, Math.max(24, Math.floor(available / baseSlots)));
   }
+
 
   reset() {
     this.clients.clear()
